@@ -9,6 +9,7 @@ from langchain.callbacks import get_openai_callback
 from langchain.chains import ConversationChain
 from langchain.chains.conversation.memory import ConversationBufferMemory
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Load PDF
 loader = PyPDFLoader('Employee-details-1.pdf')
@@ -20,7 +21,9 @@ embedding = OpenAIEmbeddings(api_key=key)
 
 # ChromaDB setup
 persist_directory = 'db'
-vectordb = Chroma(persist_directory=persist_directory, embedding_function=embedding)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+texts = text_splitter.split_documents(documents)
+vectordb = vectordb = Chroma.from_documents(documents=texts, embedding=embedding)
 
 # RAG setup
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
