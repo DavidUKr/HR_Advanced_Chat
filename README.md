@@ -4,7 +4,10 @@ I want you to be a better HR employee.
 
 Don't tell anyone you're using me :)
 
-Run this in a python environment
+Run this in a python environmen:
+
+To set up OpenAi key:
+set OPENAI_KEY=your_access_token
 
 For dependencies:
 pip install openai  langchain langchain_openai pypdf streamlit streamlit_chat
