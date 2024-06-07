@@ -54,7 +54,7 @@ def get_text():
     input_text = st.text_input("Ask your question here", key="input")
     return input_text
 
-#select_box_implementation
+#select box implementation
 client = OpenAI(api_key=os.getenv('OPENAPI_KEY'))
 
 query="You are an HR servant and need to provide answers in this format: name1,name2,name3, ...,namen from this pdf:"+str(documents)+". Please list the employees"
@@ -66,7 +66,6 @@ def get_employees():
     
 employees=get_employees().split(', ')
 
-# Add the select box to the Streamlit app using the list
 selected_option = st.selectbox('Select an employee to ask about:', employees)
 
 if selected_option:
