@@ -58,7 +58,7 @@ def extract_images_and_text_from_pdf(pdf_path):
     return images, texts
 
 # Load PDF using PyPDFLoader
-pdf_path =  r"C:/Users/Talent2/Desktop/ness/employee_details.pdf"
+pdf_path =  r"employee_details.pdf"
 text_from_pdf = extract_text_from_pdf(pdf_path)
 tables_from_pdf = extract_tables_from_pdf(pdf_path)
 images_from_pdf, image_texts_from_pdf = extract_images_and_text_from_pdf(pdf_path)
