@@ -19,10 +19,11 @@ import pdfplumber
 import csv
 import pandas as pd
 from collections import defaultdict
+from langchain.document_loaders import DirectoryLoader
+from langchain.document_loaders.csv_loader import CSVLoader
 
-# Load PDF
-loader = PyPDFLoader('employee_details.pdf')
-documents = loader.load()
+
+#extract csvs from pdf
 
 def extract_table_titles(pdf_path):
     # Deschide PDF-ul
@@ -155,15 +156,15 @@ def extract_tables_from_pdf(pdf_path, output_folder):
 pdf_path = 'employee_details.pdf'  # Path to your PDF file
 output_folder = 'extracted_content'  # Output folder to save images and tables
 
-import os
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 # ok
 extract_images_from_pdf(pdf_path, output_folder)
 extract_tables_from_pdf(pdf_path, output_folder)
 
-
-
+#loading csvs
+loader = DirectoryLoader(path="./extracted_content", glob="*.csv", loader_cls=CSVLoader)
+docs = loader.load()
 
 # Get API access
 key = os.getenv('OPENAPI_KEY')
@@ -171,9 +172,13 @@ embedding = OpenAIEmbeddings(api_key=key)
 
 # ChromaDB setup
 persist_directory = 'db'
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-texts = text_splitter.split_documents(documents)
-vectordb = vectordb = Chroma.from_documents(documents=texts, embedding=embedding)
+vectordb = Chroma.from_documents(documents=docs, 
+                                 embedding=embedding,
+                                 persist_directory=persist_directory)
+vectordb.persist()
+vectordb = None    
+vectordb = Chroma(persist_directory=persist_directory, 
+                  embedding_function=embedding)
 
 # RAG setup
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
