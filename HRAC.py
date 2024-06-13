@@ -11,9 +11,159 @@ from langchain.chains.conversation.memory import ConversationBufferMemory
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
+import fitz  # PyMuPDF
+import io
+import pytesseract
+from PIL import Image
+import pdfplumber
+import csv
+import pandas as pd
+from collections import defaultdict
+
 # Load PDF
-loader = PyPDFLoader('Employee-details-1.pdf')
+loader = PyPDFLoader('employee_details.pdf')
 documents = loader.load()
+
+def extract_table_titles(pdf_path):
+    # Deschide PDF-ul
+    doc = fitz.open(pdf_path)
+    table_titles = []
+    title_frequencies = defaultdict(int)
+
+    # Variabilă pentru a ține evidența rândurilor goale între titlurile de tabele
+    blank_lines_count = 0
+    
+    # Parcurge fiecare pagină
+    for page_num in range(doc.page_count):
+        page = doc.load_page(page_num)
+        text = page.get_text("text")
+        lines = text.split('\n')
+        
+        for line in lines:
+            words = line.split()
+            
+            # Verifică dacă linia este goală
+            if len(words) == 0:
+                blank_lines_count += 1
+            else:
+                # Verifică dacă linia conține un singur cuvânt care începe cu literă mare
+                if len(words) == 1 and words[0][0].isupper():
+                    # Pentru primul titlu de tabel, nu este nevoie să verificăm numărul de rânduri goale
+                    if not table_titles or blank_lines_count >= 2:
+                        table_titles.append(words[0])
+                        title_frequencies[words[0]] = 0
+                    blank_lines_count = 0  # Resetează contorul de rânduri goale
+                else:
+                    # Resetează contorul de rânduri goale dacă întâlnește o linie care nu este goală sau nu este titlu de tabel
+                    blank_lines_count = 0
+
+    return table_titles, dict(title_frequencies)
+    
+def extract_images_from_pdf(pdf_path, output_folder):
+    pdf_document = fitz.open(pdf_path)
+    
+    for page_num in range(len(pdf_document)):
+        page = pdf_document.load_page(page_num)
+        image_list = page.get_images(full=True)
+
+        for img_index, img in enumerate(image_list):
+            xref = img[0]
+            base_image = pdf_document.extract_image(xref)
+            image_bytes = base_image["image"]
+
+            image = Image.open(io.BytesIO(image_bytes))
+            image_path = os.path.join(f"Imagine.jpg")
+            image.save(image_path)
+
+            print(f"Saved image: {image_path}")
+
+    print("Image extraction complete.")
+    img = Image.open('Imagine.jpg')
+    text = pytesseract.image_to_string(img)
+    print(text)
+
+
+def normalize_header(header):
+    """Normalizează header-ul eliminând spațiile și caracterele de nouă linie."""
+   # header=header.rstrip('\n')
+    # header.replace('\n',"").strip()
+    for df in header.columns:
+        df=df.replace('\n','').strip()
+    return header#header.replace('\n','').strip()
+
+def extract_tables_from_pdf(pdf_path, output_folder):
+    table_titles, title_frequencies = extract_table_titles(pdf_path)
+    index=0
+    all_tables_df = pd.DataFrame()
+    # Cuvinte cheie de verificat în antetul tabelului (normalizate)
+    keywords = {"region_id", "country_id", "location_id", "job_id"}
+    
+    # Creează directorul de ieșire dacă nu există
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    
+    with pdfplumber.open(pdf_path) as pdf:
+        for page_num, page in enumerate(pdf.pages):
+            tables = page.extract_tables()
+
+            for table_index, table in enumerate(tables):
+                # Creează DataFrame din tabel
+                if len(table) > 1:
+                    df = pd.DataFrame(table[1:], columns=table[0])
+                else:
+                    continue  # Sari peste tabelele fără date
+                
+                # Normalizează antetul
+                headers = [header for header in df.columns] #{normalize_header(header) for header in df.columns} # [header for header in df.columns] 
+                #df=normalize_header(df)
+                #headers2=[header for header in df.columns] 
+                print(f"Page {page_num + 1}, Table {table_index + 1} headers: {headers}")
+                
+                # Verifică dacă antetul conține toate cuvintele cheie
+                ok = 0
+                for keyword in keywords:
+                    if keyword in headers:
+                        ok = 1
+                        break
+
+                if ok == 1:
+                    # Construiește calea fișierului folosind os.path.join
+                    table_path = os.path.join(output_folder, f"{table_titles[index]}.csv")
+                    index=index+1
+                    #df2=df
+                    df.to_csv(table_path, index=False)
+                    if all_tables_df.empty:
+                            all_tables_df = df
+                    else:
+                            all_tables_df = pd.concat([all_tables_df, df], ignore_index=True)
+                    
+                    
+                else: 
+                    previous_table_path = os.path.join(output_folder, f"{table_titles[index - 1]}.csv")
+                    df_existent = pd.read_csv(previous_table_path)
+                    df_existent = pd.concat([df_existent, df], ignore_index=True)
+                    df_existent.to_csv(previous_table_path, index=False)
+                    all_tables_df = df_existent
+    
+
+                
+                print(f"Saved table: {table_path}, OK: {ok}")
+   
+    print("Table extraction complete.")
+    
+# Example usage
+pdf_path = 'employee_details.pdf'  # Path to your PDF file
+output_folder = 'extracted_content'  # Output folder to save images and tables
+
+import os
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
+# ok
+extract_images_from_pdf(pdf_path, output_folder)
+extract_tables_from_pdf(pdf_path, output_folder)
+
+
+
 
 # Get API access
 key = os.getenv('OPENAPI_KEY')
