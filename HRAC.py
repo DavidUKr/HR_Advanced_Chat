@@ -131,20 +131,22 @@ def extract_tables_from_pdf(pdf_path, output_folder):
                     # Construiește calea fișierului folosind os.path.join
                     table_path = os.path.join(output_folder, f"{table_titles[index]}.csv")
                     index=index+1
+                    aux_header=headers
                     #df2=df
                     df.to_csv(table_path, index=False)
                     if all_tables_df.empty:
                             all_tables_df = df
                     else:
                             all_tables_df = pd.concat([all_tables_df, df], ignore_index=True)
-                    
-                    
+
+
                 else: 
                     previous_table_path = os.path.join(output_folder, f"{table_titles[index - 1]}.csv")
                     df_existent = pd.read_csv(previous_table_path)
+                    df.columns = aux_header
                     df_existent = pd.concat([df_existent, df], ignore_index=True)
+                    print(df_existent)
                     df_existent.to_csv(previous_table_path, index=False)
-                    all_tables_df = df_existent
     
 
                 
