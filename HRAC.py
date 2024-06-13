@@ -22,9 +22,6 @@ from collections import defaultdict
 from langchain.document_loaders import DirectoryLoader
 from langchain.document_loaders.csv_loader import CSVLoader
 
-from langchain.document_loaders import DirectoryLoader
-from langchain.document_loaders.csv_loader import CSVLoader
-
 
 #extract csvs from pdf
 
