@@ -22,6 +22,9 @@ from collections import defaultdict
 from langchain.document_loaders import DirectoryLoader
 from langchain.document_loaders.csv_loader import CSVLoader
 
+from langchain.document_loaders import DirectoryLoader
+from langchain.document_loaders.csv_loader import CSVLoader
+
 
 #extract csvs from pdf
 
@@ -162,9 +165,8 @@ if not os.path.exists(output_folder):
 extract_images_from_pdf(pdf_path, output_folder)
 extract_tables_from_pdf(pdf_path, output_folder)
 
-#loading csvs
-loader = DirectoryLoader(path="./extracted_content", glob="*.csv", loader_cls=CSVLoader)
-docs = loader.load()
+
+
 
 # Get API access
 key = os.getenv('OPENAPI_KEY')
