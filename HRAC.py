@@ -164,8 +164,9 @@ if not os.path.exists(output_folder):
 extract_images_from_pdf(pdf_path, output_folder)
 extract_tables_from_pdf(pdf_path, output_folder)
 
-
-
+#load documents
+loader = DirectoryLoader(path="./extracted_content", glob="*.csv", loader_cls=CSVLoader)
+docs = loader.load()
 
 # Get API access
 key = os.getenv('OPENAPI_KEY')
