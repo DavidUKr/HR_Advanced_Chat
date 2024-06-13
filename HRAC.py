@@ -212,6 +212,27 @@ def get_text():
     input_text = st.text_input("Ask your question here", key="input")
     return input_text
 
+#select box implementation
+client = OpenAI(api_key=os.getenv('OPENAPI_KEY'))
+
+query="You are an HR servant and need to provide answers in this format: name1,name2,name3, ...,namen from this pdf:"+str(documents)+". Please list the employees"
+
+def get_employees():
+    result = qa.invoke(query)
+
+    return result['result']
+    
+employees=get_employees().split(', ')
+
+selected_option = st.selectbox('Select an employee to ask about:', employees)
+
+if selected_option:
+    query="Who is "+selected_option
+    output = run_with_conversation_buffer(qa, query, conversation_buf)
+    # Store the output
+    st.session_state.openai_response.append(output)
+    st.session_state.user_input.append(query)
+
 # Question input
 user_input = get_text()
 
