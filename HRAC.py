@@ -215,7 +215,7 @@ def get_text():
 #select box implementation
 client = OpenAI(api_key=os.getenv('OPENAPI_KEY'))
 
-query="You are an HR servant and need to provide answers in this format: name1,name2,name3, ...,namen from this pdf:"+str(documents)+". Please list the employees"
+query="You are an HR servant and need to provide answers in this format: name1,name2,name3, ...,namen from this pdf:"+str(documents)+". Please list the employees in alphabetical order"
 
 def get_employees():
     result = qa.invoke(query)
