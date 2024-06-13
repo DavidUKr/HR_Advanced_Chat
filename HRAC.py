@@ -10,6 +10,8 @@ from langchain.chains import ConversationChain
 from langchain.chains.conversation.memory import ConversationBufferMemory
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.document_loaders import DirectoryLoader
+from langchain.document_loaders.csv_loader import CSVLoader
 
 import fitz  # PyMuPDF
 import io
@@ -19,8 +21,7 @@ import pdfplumber
 import csv
 import pandas as pd
 from collections import defaultdict
-from langchain.document_loaders import DirectoryLoader
-from langchain.document_loaders.csv_loader import CSVLoader
+
 
 
 #extract csvs from pdf
