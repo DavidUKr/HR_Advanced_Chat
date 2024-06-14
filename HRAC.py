@@ -213,7 +213,7 @@ if not os.path.exists(output_folder):
 extract_images_from_pdf(pdf_path, output_folder)
 extract_tables_from_pdf(pdf_path, output_folder)
 
-image_path = r"C:\Users\Talent2\Desktop\ness\extracted_images\Image1.jpg"
+image_path = r"extracted_images\Image1.jpg"
 
 try:
     extracted_text = extract_text_from_image(image_path)
@@ -224,19 +224,19 @@ except FileNotFoundError as e:
 
 documents = [Document(page_content=extracted_t, metadata={"source": "Image1.jpg"})]
 
-path = r"C:/Users/Talent2/Desktop/ness/extracted_content"
+path = r"extracted_content"
 countries_df = pd.read_csv(os.path.join(path, 'Countries.csv'))
 departments_df = pd.read_csv(os.path.join(path, 'Departments.csv'))
 employees_df = pd.read_csv(os.path.join(path, 'Employees.csv'))
 jobs_df = pd.read_csv(os.path.join(path, 'Jobs.csv'))
 locations_df = pd.read_csv(os.path.join(path, 'Locations.csv'))
 regions_df = pd.read_csv(os.path.join(path, 'Regions.csv'))
-p1 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Countries.csv"
-p2 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Departments.csv"
-p3 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Employees.csv"
-p4 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Jobs.csv"
-p5 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Locations.csv"
-p6 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Regions.csv"
+p1 = r"extracted_content/Countries.csv"
+p2 = r"extracted_content/Departments.csv"
+p3 = r"extracted_content/Employees.csv"
+p4 = r"extracted_content/Jobs.csv"
+p5 = r"extracted_content/Locations.csv"
+p6 = r"extracted_content/Regions.csv"
 merged_df = pd.merge(regions_df, countries_df, on='region_id')
 merged_df = pd.merge(merged_df, locations_df, on='country_id')
 merged_df = pd.merge(merged_df, departments_df, on='location_id')
