@@ -218,7 +218,7 @@ image_path = r"extracted_images\Image1.jpg"
 
 try:
     extracted_text = extract_text_from_image(image_path)
-    extracted_t="These are the only informations about John Doe: " + extracted_text
+    extracted_t="These is the only information about John Doe: " + extracted_text
     #print("Extracted Text:", extracted_text)
 except FileNotFoundError as e:
     print(e)
