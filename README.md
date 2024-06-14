@@ -14,6 +14,7 @@ pip install openai  langchain langchain_openai pypdf streamlit streamlit_chat
 pip install camelot-py[cv]
 pip install pdfminer.six
 pip install pdfplumber pytesseract pdf2image
+pip install typing unstructured pymupdf streamlit_navigation_bar streamlit_calendar opencv_python
 
 Install Tesseract-OCR:
 Download the Tesseract installer for Windows from this link https://github.com/UB-Mannheim/tesseract/wiki  and follow the installation instructions. Add path (usually C:\Program Files\Tesseract-OCR).
