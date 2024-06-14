@@ -23,6 +23,7 @@ import pdfplumber
 import csv
 import pandas as pd
 from collections import defaultdict
+import cv2
 
 
 
@@ -295,28 +296,28 @@ def get_text():
     return input_text
 
 #select box implementation
-client = OpenAI(api_key=os.getenv('OPENAPI_KEY'))
+# client = OpenAI(api_key=os.getenv('OPENAPI_KEY'))
 
-loader=CSVLoader('extracted_content\Employees.csv')
-documents=loader.load()
+# loader=PyPDFLoader('Employee-details-1.pdf')
+# documents=loader.load()
 
-query="You are an HR servant and need to provide answers in this format: name1,name2,name3, ...,namen from this pdf:"+str(documents)+". Please list the employees in alphabetical order"
+# query="You are an HR servant and need to provide answers in this format: name1,name2,name3, ...,namen from this pdf:"+str(documents)+". Please list the employees in alphabetical order"
 
-def get_employees():
-    result = qa.invoke(query)
+# def get_employees():
+#     result = qa.invoke(query)
 
-    return result['result']
+#     return result['result']
     
-employees=get_employees().split(', ')
+# employees=get_employees().split(', ')
 
-selected_option = st.selectbox('Select an employee to ask about:', employees)
+# selected_option = st.selectbox('Select an employee to ask about:', employees)
 
-if selected_option:
-    query="Who is "+selected_option
-    output = run_with_conversation_buffer(qa, query, conversation_buf)
-    # Store the output
-    st.session_state.openai_response.append(output)
-    st.session_state.user_input.append(query)
+# if selected_option:
+#     query="Who is "+selected_option
+#     output = run_with_conversation_buffer(qa, query, conversation_buf)
+#     # Store the output
+#     st.session_state.openai_response.append(output)
+#     st.session_state.user_input.append(query)
 
 # Question input
 user_input = get_text()
