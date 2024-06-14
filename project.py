@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_navigation_bar import st_navbar
 import os
 import dashboard
-import chatbot
+import HRAC
 import profiles
 
 # title_html = """
@@ -52,6 +52,6 @@ with st.sidebar:
 if page == "Dashboard":
     dashboard.show_dashboard()
 elif page == "Chatbot": 
-    chatbot.show_chatbot()
+    HRAC.show_chatbot()
 elif page == "Profile": 
     profiles.show_profiles()
