@@ -23,9 +23,8 @@ import pdfplumber
 import csv
 import pandas as pd
 from collections import defaultdict
-import cv2
 
-
+#UI
 def show_chatbot():
 
     def set_page_bg_color(color):
@@ -366,7 +365,7 @@ def get_text():
     return input_text
 
 #select box implementation
-# client = OpenAI(api_key=os.getenv('OPENAPI_KEY'))
+client = OpenAI(api_key=os.getenv('OPENAPI_KEY'))
 
 # loader=PyPDFLoader('Employee-details-1.pdf')
 # documents=loader.load()
