@@ -26,7 +26,77 @@ from collections import defaultdict
 import cv2
 
 
+def show_chatbot():
 
+    def set_page_bg_color(color):
+        page_bg_style = f'''
+        <style>
+        .stApp {{
+            background-color: {color};
+        }}
+        </style>
+        '''
+        st.markdown(page_bg_style, unsafe_allow_html=True)
+
+    set_page_bg_color("#FFFFFF")        
+
+    @st.cache_data
+    def get_base64_of_bin_file(bin_file):
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+
+    def image_with_position(png_file, top, left, width, height, hyperlink=None):
+        bin_str = get_base64_of_bin_file(png_file)
+        image_html = f'''
+        <div class="image-container" style="position: relative; margin-top: {top}px; margin-left: {left}px;">
+            <img src="data:image/png;base64,{bin_str}" style="width: {width}px; height: {height}px;">
+        </div>
+        '''
+        st.markdown(image_html, unsafe_allow_html=True)
+        if hyperlink:
+            button_html = f'''
+            <div class="button-container" style="position: relative; margin-top: -80px; margin-left: 520px;">
+                <a href="{hyperlink}" target="_blank">
+                    <button style="background-color: #ED82E6; color: white; border: none; padding: 10px 20px; cursor: pointer;">View Document</button>
+                </a>
+            </div>
+            '''
+            st.markdown(button_html, unsafe_allow_html=True)
+
+    def image_with_position_border(png_file, top, left, width, height, style, radius, color, b, hyperlink=None):
+        bin_str = get_base64_of_bin_file(png_file)
+        image_html = f'''
+        <style>
+        .bordered-image {{
+            border-style: {style};
+            border-radius: {radius}px;
+            border-color:  {color};
+            border-width: {b}px;
+            width: {width}px;
+            height: {height}px;
+            margin-top: {top}px;
+            margin-left: {left}px;
+        }}
+        </style>
+        <div>
+            <img src="data:image/png;base64,{bin_str}" class="bordered-image">
+        </div>
+        '''
+        st.markdown(image_html, unsafe_allow_html=True)
+        if hyperlink:
+            button_html = f'''
+            <div class="button-container" style="position: relative; margin-top: -80px; margin-left: 520px;">
+                <a href="{hyperlink}" target="_blank">
+                    <button style="background-color: #ED82E6; color: white; border: none; padding: 10px 20px; cursor: pointer;">View Document</button>
+                </a>
+            </div>
+            '''
+            st.markdown(button_html, unsafe_allow_html=True)
+        
+        image_with_position_border('./static/images/enhance.jpg', top=0, left=0, width=400, height=493, style='solid', radius=10, color='black', b=2)
+
+    #######################################################################
 
 #extract csvs from pdf
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Modificați calea după locația instalării Tesseract
