@@ -318,10 +318,11 @@ merged_df = pd.merge(merged_df, employees_df, on='job_id')
 #print("Columns in merged_df:", merged_df.columns)
 
 # Access 'text' column
-merged_df['text'] = merged_df.astype(str).apply(' '.join, axis=1)
-text_column = merged_df['text']
+# merged_df['text'] = merged_df.astype(str).apply(' '.join, axis=1)
+# text_column = merged_df['text']
 
-loader = DataFrameLoader(data_frame=merged_df, page_content_column='text')
+# loader = DataFrameLoader(data_frame=merged_df, page_content_column='text')
+loader = DirectoryLoader(path="./extracted_content", glob="./*.csv", loader=CSVLoader)
 documents = documents + loader.load()
 
 # Create OpenAIEmbeddings instance
