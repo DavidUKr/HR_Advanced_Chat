@@ -12,6 +12,8 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import DirectoryLoader
 from langchain.document_loaders.csv_loader import CSVLoader
+from langchain.document_loaders import DataFrameLoader
+from langchain.schema import Document
 
 import fitz  # PyMuPDF
 import io
@@ -22,80 +24,51 @@ import csv
 import pandas as pd
 from collections import defaultdict
 
-#UI
-def show_chatbot():
 
-    def set_page_bg_color(color):
-        page_bg_style = f'''
-        <style>
-        .stApp {{
-            background-color: {color};
-        }}
-        </style>
-        '''
-        st.markdown(page_bg_style, unsafe_allow_html=True)
 
-    set_page_bg_color("#FFFFFF")        
-
-    @st.cache_data
-    def get_base64_of_bin_file(bin_file):
-        with open(bin_file, 'rb') as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-
-    def image_with_position(png_file, top, left, width, height, hyperlink=None):
-        bin_str = get_base64_of_bin_file(png_file)
-        image_html = f'''
-        <div class="image-container" style="position: relative; margin-top: {top}px; margin-left: {left}px;">
-            <img src="data:image/png;base64,{bin_str}" style="width: {width}px; height: {height}px;">
-        </div>
-        '''
-        st.markdown(image_html, unsafe_allow_html=True)
-        if hyperlink:
-            button_html = f'''
-            <div class="button-container" style="position: relative; margin-top: -80px; margin-left: 520px;">
-                <a href="{hyperlink}" target="_blank">
-                    <button style="background-color: #ED82E6; color: white; border: none; padding: 10px 20px; cursor: pointer;">View Document</button>
-                </a>
-            </div>
-            '''
-            st.markdown(button_html, unsafe_allow_html=True)
-
-    def image_with_position_border(png_file, top, left, width, height, style, radius, color, b, hyperlink=None):
-        bin_str = get_base64_of_bin_file(png_file)
-        image_html = f'''
-        <style>
-        .bordered-image {{
-            border-style: {style};
-            border-radius: {radius}px;
-            border-color:  {color};
-            border-width: {b}px;
-            width: {width}px;
-            height: {height}px;
-            margin-top: {top}px;
-            margin-left: {left}px;
-        }}
-        </style>
-        <div>
-            <img src="data:image/png;base64,{bin_str}" class="bordered-image">
-        </div>
-        '''
-        st.markdown(image_html, unsafe_allow_html=True)
-        if hyperlink:
-            button_html = f'''
-            <div class="button-container" style="position: relative; margin-top: -80px; margin-left: 520px;">
-                <a href="{hyperlink}" target="_blank">
-                    <button style="background-color: #ED82E6; color: white; border: none; padding: 10px 20px; cursor: pointer;">View Document</button>
-                </a>
-            </div>
-            '''
-            st.markdown(button_html, unsafe_allow_html=True)
-        
-        image_with_position_border('./static/images/enhance.jpg', top=0, left=0, width=400, height=493, style='solid', radius=10, color='black', b=2)
-
-    #######################################################################
 
 #extract csvs from pdf
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Modificați calea după locația instalării Tesseract
+
+def preprocess_image(image_path):
+    # Citește imaginea
+    image = cv2.imread(image_path)
+    
+    # Verifică dacă imaginea a fost încărcată corect
+    if image is None:
+        raise FileNotFoundError(f"Imaginea nu a putut fi găsită la calea specificată: {image_path}")
+    
+    # Convertirea imaginii în nuanțe de gri
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # Inversarea imaginii
+    inverted = cv2.bitwise_not(gray)
+    
+    # Aplicarea unui filtru de umbrire pentru a îmbunătăți contrastul
+    _, thresholded = cv2.threshold(inverted, 150, 255, cv2.THRESH_BINARY)
+    
+    # Salvarea imaginii preprocesate pentru verificare (opțional)
+    preprocessed_path = 'preprocessed_image.png'
+    cv2.imwrite(preprocessed_path, thresholded)
+    print(f"Imagine preprocesată salvată la: {preprocessed_path}")
+    
+    return thresholded
+
+def extract_text_from_image(image_path):
+    try:
+        # Preprocesarea imaginii
+        preprocessed_image = preprocess_image(image_path)
+        
+        # Convertirea imaginii preprocesate la un format compatibil cu PIL
+        pil_image = Image.fromarray(preprocessed_image)
+        
+        # Utilizarea Tesseract pentru a extrage textul
+        text = pytesseract.image_to_string(pil_image)
+        return text
+    except Exception as e:
+        print(f"Eroare la extragerea textului: {e}")
+        return ""
+
 
 def extract_table_titles(pdf_path):
     # Deschide PDF-ul
@@ -134,6 +107,7 @@ def extract_table_titles(pdf_path):
     
 def extract_images_from_pdf(pdf_path, output_folder):
     pdf_document = fitz.open(pdf_path)
+    index=0
     
     for page_num in range(len(pdf_document)):
         page = pdf_document.load_page(page_num)
@@ -145,15 +119,14 @@ def extract_images_from_pdf(pdf_path, output_folder):
             image_bytes = base_image["image"]
 
             image = Image.open(io.BytesIO(image_bytes))
-            image_path = os.path.join(f"Imagine.jpg")
+            image_path = os.path.join(output_folder,f"Image{index + 1}.jpg")
+            index=index+1
             image.save(image_path)
 
             print(f"Saved image: {image_path}")
+            
 
     print("Image extraction complete.")
-    img = Image.open('Imagine.jpg')
-    text = pytesseract.image_to_string(img)
-    print(text)
 
 
 def normalize_header(header):
@@ -210,15 +183,19 @@ def extract_tables_from_pdf(pdf_path, output_folder):
                             all_tables_df = df
                     else:
                             all_tables_df = pd.concat([all_tables_df, df], ignore_index=True)
-
-
+                    
+                    
                 else: 
                     previous_table_path = os.path.join(output_folder, f"{table_titles[index - 1]}.csv")
                     df_existent = pd.read_csv(previous_table_path)
+                    df.loc[-1] = df.columns  # Adaugă antetul inițial ca prima linie
+                    df.index = df.index + 1  # Mută toate indexurile în jos
+                    df = df.sort_index()  
                     df.columns = aux_header
                     df_existent = pd.concat([df_existent, df], ignore_index=True)
-                    print(df_existent)
+                    #print(df_existent)
                     df_existent.to_csv(previous_table_path, index=False)
+                    
     
 
                 
@@ -236,29 +213,63 @@ if not os.path.exists(output_folder):
 extract_images_from_pdf(pdf_path, output_folder)
 extract_tables_from_pdf(pdf_path, output_folder)
 
-#load documents
-loader = DirectoryLoader(path="./extracted_content", glob="*.csv", loader_cls=CSVLoader)
-docs = loader.load()
+image_path = r"C:\Users\Talent2\Desktop\ness\extracted_images\Image1.jpg"
 
-# Get API access
-key = os.getenv('OPENAPI_KEY')
-embedding = OpenAIEmbeddings(api_key=key)
+try:
+    extracted_text = extract_text_from_image(image_path)
+    extracted_t="These are the only informations about John Doe: " + extracted_text
+    #print("Extracted Text:", extracted_text)
+except FileNotFoundError as e:
+    print(e)
+
+documents = [Document(page_content=extracted_t, metadata={"source": "Image1.jpg"})]
+
+path = r"C:/Users/Talent2/Desktop/ness/extracted_content"
+countries_df = pd.read_csv(os.path.join(path, 'Countries.csv'))
+departments_df = pd.read_csv(os.path.join(path, 'Departments.csv'))
+employees_df = pd.read_csv(os.path.join(path, 'Employees.csv'))
+jobs_df = pd.read_csv(os.path.join(path, 'Jobs.csv'))
+locations_df = pd.read_csv(os.path.join(path, 'Locations.csv'))
+regions_df = pd.read_csv(os.path.join(path, 'Regions.csv'))
+p1 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Countries.csv"
+p2 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Departments.csv"
+p3 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Employees.csv"
+p4 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Jobs.csv"
+p5 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Locations.csv"
+p6 = r"C:/Users/Talent2/Desktop/ness/extracted_content/Regions.csv"
+merged_df = pd.merge(regions_df, countries_df, on='region_id')
+merged_df = pd.merge(merged_df, locations_df, on='country_id')
+merged_df = pd.merge(merged_df, departments_df, on='location_id')
+merged_df = pd.merge(merged_df, employees_df, on='department_id')
+merged_df = pd.merge(merged_df, employees_df, on='job_id')
+
+
+# Print columns in merged_df to verify 'text' column existence
+#print("Columns in merged_df:", merged_df.columns)
+
+# Access 'text' column
+merged_df['text'] = merged_df.astype(str).apply(' '.join, axis=1)
+text_column = merged_df['text']
+
+loader = DataFrameLoader(data_frame=merged_df, page_content_column='text')
+documents = documents + loader.load()
+
+# Create OpenAIEmbeddings instance
+api_key = os.getenv('OPENAI_API_KEY')  # Replace with your OpenAI API key
+embedding = OpenAIEmbeddings(api_key=api_key)
 
 # ChromaDB setup
-persist_directory = 'db'
-vectordb = Chroma.from_documents(documents=docs, 
-                                 embedding=embedding,
-                                 persist_directory=persist_directory)
-vectordb.persist()
-vectordb = None    
-vectordb = Chroma(persist_directory=persist_directory, 
-                  embedding_function=embedding)
+persist_directory = 'chroma_db'
+vectordb = Chroma.from_documents(
+    documents=documents,
+    embedding=embedding,
+    persist_directory=persist_directory
+)
+vectordb.persist()  # Persist the vector database to disk
 
 # RAG setup
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
-qa = RetrievalQA.from_chain_type(
-    llm, retriever=vectordb.as_retriever()
-)
+qa = RetrievalQA.from_chain_type(llm, retriever=vectordb.as_retriever())
 
 conversation_buf = ConversationChain(
     llm=llm,
